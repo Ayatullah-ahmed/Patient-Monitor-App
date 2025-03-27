@@ -472,33 +472,16 @@ class Ui_MainWindow(object):
             freqs, psd = signal.welch(self.ecg_data, fs, nperseg=1024)
             spectral_entropy = stats.entropy(psd + 1e-10)
             dominant_freq = freqs[np.argmax(psd)]
-            spectral_centroid = np.sum(freqs * psd) / np.sum(psd)
-            rolloff_85 = freqs[np.where(np.cumsum(psd) >= 0.85 * np.sum(psd))[0][0]]
-            rolloff_95 = freqs[np.where(np.cumsum(psd) >= 0.95 * np.sum(psd))[0][0]]
             
             # Time-Domain Features
-            mean = np.mean(self.ecg_data)
-            variance = np.var(self.ecg_data)
-            std = np.std(self.ecg_data)
-            skew = stats.skew(self.ecg_data)
             kurtosis = stats.kurtosis(self.ecg_data)
-            rms = np.sqrt(np.mean(self.ecg_data**2))
-            zcr = np.sum(np.diff(np.sign(self.ecg_data)) != 0) / len(self.ecg_data)
-            
+
             # Arrhythmia Classification
-            classification = self.classify_arrhythmia(dominant_freq, spectral_entropy, zcr, kurtosis, skew, rolloff_85, rolloff_95, spectral_centroid)
+            classification = self.classify_arrhythmia(dominant_freq, kurtosis)
             arrhythmia_result = (classification)
             
             # Display Features and Arrhythmia Classification
             features_str = (
-                "=== Time-Domain Features ===\n"
-                f"Mean: {mean:.4f}\nVariance: {variance:.4f}\nStd Dev: {std:.4f}\n"
-                f"Skewness: {skew:.4f}\nKurtosis: {kurtosis:.4f}\nRMS: {rms:.4f}\nZero-Crossing Rate: {zcr:.4f}\n\n"
-                "=== Frequency-Domain Features ===\n"
-                f"Spectral Entropy: {spectral_entropy:.4f}\nDominant Frequency: {dominant_freq:.4f} Hz\n"
-                f"Spectral Centroid: {spectral_centroid:.4f} Hz\n"
-                f"Spectral Rolloff (85%): {rolloff_85:.4f} Hz\nSpectral Rolloff (95%): {rolloff_95:.4f} Hz\n\n"
-                "=== Arrhythmia Classification ===\n"
                 f"{arrhythmia_result}"
             )
             alarm_color = "#00FF00"  # Green
@@ -571,7 +554,6 @@ class Ui_MainWindow(object):
         distance = max(1, int(fs*0.6))
         # Detect R-peaks using find_peaks
         peaks, _ = signal.find_peaks(ecg_signal, height=np.mean(ecg_signal) + np.std(ecg_signal), distance=distance)  
-        # distance=fs*0.6 ensures we detect R-peaks at least 0.6 sec apart
 
         if len(peaks) < 2:
                 return self.heart_rate  # Not enough peaks to determine heart rate
@@ -589,25 +571,25 @@ class Ui_MainWindow(object):
 
 
         # Arrhythmia Classification Function
-    def classify_arrhythmia(self,dominant_freq, spectral_entropy, zcr, kurtosis, skewness, rolloff_85, rolloff_95, spectral_centroid): 
-        classification = []
+    def classify_arrhythmia(self, dominant_freq,  kurtosis): 
+        classification = None
         if kurtosis < 5 and 5 <= dominant_freq < 8:
                 print("atrial fib")
-                classification.append("Atrial Fibrillation")
+                classification = "Atrial Fibrillation"
         elif 5 <= kurtosis <= 10 and dominant_freq>10:
                 print("atrial flutter")
-                classification.append("Atrial Flutter")
+                classification = "Atrial Flutter"
         elif 10 <= kurtosis <= 14 and dominant_freq<10:
                 print("svt")
-                classification.append("Supraventricular Tachycardia")
+                classification = "Supraventricular Tachycardia"
         elif 14 <= kurtosis < 19 and dominant_freq<2:
                 print("sinus B")
-                classification.append("Sinus Bradycardia")
+                classification = "Sinus Bradycardia"
         elif kurtosis >=19 and dominant_freq>10:
                 print("sinus T")
-                classification.append("Sinus Tachycardia")
+                classification = "Sinus Tachycardia"
         else: 
-                classification.append("Normal sinus rhythm. No arrhythmia")
+                classification = "Normal sinus rhythm, No arrhythmia"
 
         return classification
     #ss
