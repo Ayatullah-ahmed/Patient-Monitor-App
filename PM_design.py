@@ -26,7 +26,7 @@ class Ui_MainWindow(object):
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_all_plots)
-        self.timer.start(1000)  # 1Hz update rate
+        self.timer.start(500)  # 1Hz update rate
         
         # Data initialization
         self.spo2_data = []
