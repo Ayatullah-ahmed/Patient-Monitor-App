@@ -600,6 +600,53 @@ class Ui_MainWindow(object):
                 classification.append("Normal sinus rhythm. No arrhythmia")
 
         return classification
+    #ss
+    def update_temperature(self):
+        """
+        Generate a random temperature with slight variations
+        Typical normal body temperature range of 36.5-37.5°C
+        """
+        base_temp = 37.0  # Normal body temperature
+        variation = np.random.uniform(-0.5, 0.5)  # Small random variation
+        current_temp = round(base_temp + variation, 1)
+
+        # Update temperature display
+        self.tempValue.setText(str(current_temp))
+
+        # Color code temperature
+        if current_temp > 38.0 or current_temp < 36.0:
+            self.tempValue.setStyleSheet("color:#FF0000;font-weight:bolder;font-size:80px;border-top:none;")
+        else:
+            self.tempValue.setStyleSheet("color:#39FF5E;font-weight:bolder;font-size:80px;border-top:none;")
+
+    def update_respiratory_rate(self):
+        """
+        Simulate respiratory rate calculation
+        Typical respiratory rate: 12-20 breaths per minute
+        """
+        # Simulate respiratory rate calculation
+        base_rate = 16  # Average respiratory rate
+        variation = np.random.randint(-4, 5)  # Small random variation
+        current_rate = base_rate + variation
+
+        # Ensure rate stays within reasonable bounds
+        current_rate = max(8, min(current_rate, 30))
+
+        # Update respiratory rate display
+        self.RRvalue.setText(str(current_rate))
+
+        # Color code respiratory rate
+        if current_rate < 10 or current_rate > 25:
+            self.RRvalue.setStyleSheet("color:#FF0000;font-weight:bolder;font-size:80px;border-top:none;")
+        else:
+            self.RRvalue.setStyleSheet("color:#E8D34B;font-weight:bolder;font-size:80px;border-top:none;")
+
+    def update_all_plots(self):
+        self.update_spo2_plot()
+        self.update_bp_value()
+        self.update_temperature()  # Add this line
+        self.update_respiratory_rate()
+
 
 
 
