@@ -517,19 +517,23 @@ class Ui_MainWindow(object):
         # Calculate sampling rate if not already set
         if not hasattr(self, 'fs'):
                 if len(self.time_data) > 1:
-                        self.fs = 1 / (self.time_data[1] - self.time_data[0])
+                    self.fs = 1 / (self.time_data[1] - self.time_data[0])
                 else:
-                        self.fs = 250  # default sampling rate
+                    self.fs = 250  # default sampling rate
 
-        # Always show the complete signal up to current index
-        x = np.arange(self.index + 1)
-        y = self.ecg_data[:self.index + 1]
+        display_window = 500  # Number of points to display at a time
+
+        # Define the range of points to display
+        start_index = max(0, self.index - display_window + 1)
+        x = np.arange(start_index, self.index + 1)  # Shift x-axis dynamically
+        y = self.ecg_data[start_index:self.index + 1]
+
         self.ecg_curve.setData(x, y)
 
         # Calculate heart rate on sliding window (last 2 seconds of data)
         window_size = int(2 * self.fs)  # 2 second window
         if self.index >= window_size:
-                current_window = y[-window_size:]
+                current_window = self.ecg_data[self.index - window_size:self.index]
                 heart_rate = self.calculate_heart_rate(current_window, self.fs)
                 
                 # Display heart rate immediately when first calculation is available
