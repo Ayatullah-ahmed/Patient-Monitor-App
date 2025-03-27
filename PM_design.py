@@ -332,6 +332,7 @@ class Ui_MainWindow(object):
         self.loadSpo2.setText(_translate("MainWindow", "load Spo2"))
         self.laodECG.setText(_translate("MainWindow", "load ECG"))
         self.load.setText(_translate("MainWindow", "load RR"))
+        self.load.clicked.connect(self.load_rr_data)
         self.label_2.setText(_translate("MainWindow", "Heart Rate"))
         self.HRvalue.setText(_translate("MainWindow", "85"))
         self.label_3.setText(_translate("MainWindow", "Blood Pressure"))
@@ -619,18 +620,33 @@ class Ui_MainWindow(object):
         else:
             self.tempValue.setStyleSheet("color:#39FF5E;font-weight:bolder;font-size:80px;border-top:none;")
 
-    def update_respiratory_rate(self):
-        """
-        Simulate respiratory rate calculation
-        Typical respiratory rate: 12-20 breaths per minute
-        """
-        # Simulate respiratory rate calculation
-        base_rate = 16  # Average respiratory rate
-        variation = np.random.randint(-4, 5)  # Small random variation
-        current_rate = base_rate + variation
+    def load_rr_data(self):
+        options = QFileDialog.Options()
+        file_name, _ = QFileDialog.getOpenFileName(None, "Open Dataset", "", "Text Files (*.txt);;All Files (*)",
+                                                   options=options)
+        if file_name:
+            try:
+                with open(file_name, "r") as file:
+                    self.rr_data = [float(line.strip()) for line in file.readlines()]
+                self.rr_index = 0  # Reset index after loading new data
+            except Exception as e:
+                print("Error loading dataset:", e)
 
-        # Ensure rate stays within reasonable bounds
-        current_rate = max(8, min(current_rate, 30))
+    def update_respiratory_rate(self):
+        max_points = 500
+        if not hasattr(self, 'rr_data') or not self.rr_data:
+            # If no data loaded, use random generation
+            base_rate = 16
+            variation = np.random.randint(-4, 5)
+            current_rate = base_rate + variation
+            current_rate = max(8, min(current_rate, 30))
+        else:
+            # Use loaded data
+            if self.rr_index >= len(self.rr_data):
+                self.rr_index = 0  # Restart if end is reached
+
+            current_rate = self.rr_data[self.rr_index]
+            self.rr_index += 1
 
         # Update respiratory rate display
         self.RRvalue.setText(str(current_rate))
