@@ -558,7 +558,7 @@ class Ui_MainWindow(object):
 
         # Sampling rate calculation
         fs = 1 / (self.time_data[1] - self.time_data[0])  # Sampling frequency (Hz)
-        distance = max(1, min(len(ecg_signal) // 4, int(fs*0.6)))
+        distance = max(1, int(fs*0.6))
         # Detect R-peaks using find_peaks
         peaks, _ = signal.find_peaks(ecg_signal, height=np.mean(ecg_signal) + np.std(ecg_signal), distance=distance)  
         # distance=fs*0.6 ensures we detect R-peaks at least 0.6 sec apart
