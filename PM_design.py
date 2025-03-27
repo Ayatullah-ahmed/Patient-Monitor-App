@@ -31,7 +31,7 @@ class Ui_MainWindow(object):
         # Data initialization
         self.spo2_data = []
         self.spo2_displayed_values = []
-        self.current_index = 0
+        self.spo2_index = 0
         self.heart_rate = None
 
         # ECG data initialization
@@ -47,6 +47,10 @@ class Ui_MainWindow(object):
 
         self.timer_ecg = QTimer()
         self.timer_ecg.timeout.connect(self.update_ECG_plot)
+
+        self.rr_displayed_values = []
+        self.rr_data = []
+        self.rr_index = 0
 
         
         # Alarm thresholds
@@ -351,7 +355,7 @@ class Ui_MainWindow(object):
             try:
                 with open(file_name, "r") as file:
                     self.spo2_data = [float(line.strip()) for line in file.readlines()]
-                self.index = 0  # Reset index after loading new data
+                self.spo2_index = 0  # Reset index after loading new data
             except Exception as e:
                 print("Error loading dataset:", e)
     
@@ -376,12 +380,12 @@ class Ui_MainWindow(object):
         if not self.spo2_data:
             return
         
-        if self.current_index >= len(self.spo2_data):
-            self.current_index = 0  # Restart if end is reached
+        if self.spo2_index >= len(self.spo2_data):
+            self.spo2_index = 0  # Restart if end is reached
         
-        current_spo2 = self.spo2_data[self.current_index]
+        current_spo2 = self.spo2_data[self.spo2_index]
         self.spo2_displayed_values.append(current_spo2)
-        self.current_index += 1
+        self.spo2_index += 1
         
         if len(self.spo2_displayed_values) > max_points:
             self.spo2_displayed_values.pop(0)
@@ -622,40 +626,74 @@ class Ui_MainWindow(object):
 
     def load_rr_data(self):
         options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getOpenFileName(None, "Open Dataset", "", "Text Files (*.txt);;All Files (*)",
-                                                   options=options)
+        file_name, _ = QFileDialog.getOpenFileName(None, "Open Dataset", "", "CSV Files (*.csv);;All Files (*)",
+                                                        options=options)
         if file_name:
-            try:
-                with open(file_name, "r") as file:
-                    self.rr_data = [float(line.strip()) for line in file.readlines()]
-                self.rr_index = 0  # Reset index after loading new data
-            except Exception as e:
-                print("Error loading dataset:", e)
+                try:
+                        # Read the dataset using pandas
+                        df = pd.read_csv(file_name, encoding="utf-8-sig")  # Handles BOM if present
+
+                        # Assuming the RR data is in a specific column (e.g., 'rpm'), change as needed
+                        column_name = "rpm"  # Change to the correct column in your dataset
+                        if column_name in df.columns:
+                                self.rr_data = df[column_name].dropna().astype(float).tolist()
+                        else:
+                                print("Error: Column '{}' not found in dataset".format(column_name))
+                                return
+
+                        self.rr_index = 0  # Reset index after loading new data
+
+                except Exception as e:
+                        print("Error loading dataset:", e)
 
     def update_respiratory_rate(self):
-        max_points = 500
-        if not hasattr(self, 'rr_data') or not self.rr_data:
-            # If no data loaded, use random generation
-            base_rate = 16
-            variation = np.random.randint(-4, 5)
-            current_rate = base_rate + variation
-            current_rate = max(8, min(current_rate, 30))
-        else:
-            # Use loaded data
-            if self.rr_index >= len(self.rr_data):
-                self.rr_index = 0  # Restart if end is reached
+                max_points = 500  # Maximum points to display
 
-            current_rate = self.rr_data[self.rr_index]
-            self.rr_index += 1
+                if not hasattr(self, 'rr_data') or not self.rr_data:
+                        return
 
-        # Update respiratory rate display
-        self.RRvalue.setText(str(current_rate))
+                if not hasattr(self, 'rr_displayed_values'):
+                        self.rr_displayed_values = []  # Initialize list for plotting
 
-        # Color code respiratory rate
-        if current_rate < 10 or current_rate > 25:
-            self.RRvalue.setStyleSheet("color:#FF0000;font-weight:bolder;font-size:80px;border-top:none;")
-        else:
-            self.RRvalue.setStyleSheet("color:#E8D34B;font-weight:bolder;font-size:80px;border-top:none;")
+                # Restart index if reaching the end of the dataset
+                if self.rr_index >= len(self.rr_data):
+                        self.rr_index = 0
+
+                # Get current RR value from dataset
+                current_rate = self.rr_data[self.rr_index]
+                self.rr_index += 1  # Move to next data point
+
+                # Update respiratory rate display
+                self.RRvalue.setText(str(current_rate))
+
+                # Color code respiratory rate based on value
+                if current_rate < 10 or current_rate > 25:
+                        self.RRvalue.setStyleSheet("color:#FF0000;font-weight:bolder;font-size:80px;border-top:none;")
+                else:
+                        self.RRvalue.setStyleSheet("color:#E8D34B;font-weight:bolder;font-size:80px;border-top:none;")
+
+                # === Update RR Plot ===
+                self.rr_displayed_values.append(current_rate)  # Add new value
+
+                # Keep only the latest `max_points` values
+                if len(self.rr_displayed_values) > max_points:
+                        self.rr_displayed_values.pop(0)
+
+                # Define the Y-axis and X-axis range
+                min_val = min(self.rr_displayed_values) - 1
+                max_val = max(self.rr_displayed_values) + 1
+                x_min = max(len(self.rr_displayed_values) - max_points, 0)
+                x_max = max(len(self.rr_displayed_values), max_points)
+
+                # Update the plot axes
+                self.rrSignal.setYRange(min_val, max_val)
+                self.rrSignal.setXRange(x_min, x_max)
+                self.rrSignal.setLimits(xMin=x_min, xMax=x_max, yMin=min_val, yMax=max_val)
+
+                # Update RR curve with new data
+                self.rr_curve.setData(self.rr_displayed_values)
+
+
 
     def update_all_plots(self):
         self.update_spo2_plot()
