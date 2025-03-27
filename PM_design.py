@@ -86,7 +86,7 @@ class Ui_MainWindow(object):
         self.ecgSignal = pg.PlotWidget()
         self.ecgSignal.setStyleSheet("border: none;")
         self.ecgSignal.setFixedHeight(200)
-        self.ecg_curve = self.ecgSignal.plot(pen=pg.mkPen(color=(255, 255, 0), width=2))
+        self.ecg_curve = self.ecgSignal.plot(pen=pg.mkPen(color=(57, 255, 94), width=2))
         self.ecgSignal.setBackground('black')  # Set background color
         self.ecgSignal.showGrid(x=False, y=False)  # Hide grid
         self.ecgSignal.getAxis("left").setStyle(showValues=False)  # Hide y-axis labels
@@ -542,18 +542,18 @@ class Ui_MainWindow(object):
                         self.HRvalue.setText(f"{heart_rate:.0f}")
                         # Color coding
                         if heart_rate > 100:
-                                self.HRvalue.setStyleSheet("color: red; font-size: 24px;")
+                                self.HRvalue.setStyleSheet("color: red; font-size: 85px;border-top:none;")
                         elif heart_rate < 60:
-                                self.HRvalue.setStyleSheet("color: yellow; font-size: 24px;")
+                                self.HRvalue.setStyleSheet("color: yellow; font-size: 85px;border-top:none;")
                         else:
-                                self.HRvalue.setStyleSheet("color: green; font-size: 24px;")
+                                self.HRvalue.setStyleSheet("color: #39FF5E; font-size: 85px;border-top:none;")
                 else:
                         self.HRvalue.setText("--")  # Show placeholder when no valid HR
         
         # For first 2 seconds, show "Calculating..." message
         elif self.index > 0:
                 self.HRvalue.setText("Calculating...")
-                self.HRvalue.setStyleSheet("color: white; font-size: 24px;")
+                self.HRvalue.setStyleSheet("color: white; font-size: 24px;border-top:none;")
 
         self.index += 1
 
