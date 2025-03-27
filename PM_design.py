@@ -529,7 +529,7 @@ class Ui_MainWindow(object):
         # Calculate heart rate on sliding window (last 2 seconds of data)
         window_size = int(2 * self.fs)  # 2 second window
         if self.index >= window_size:
-                current_window = y[-window_size:]
+                current_window = self.ecg_data[self.index - window_size:self.index]
                 heart_rate = self.calculate_heart_rate(current_window, self.fs)
                 
                 # Display heart rate immediately when first calculation is available
