@@ -445,13 +445,13 @@ class Ui_MainWindow(object):
                 df = pd.read_csv(self.file_path)  # Load CSV into Pandas DataFrame
                 self.ecg_data = df['signal'].values  # Extract ECG signal column
                 if 'Time' not in df.columns:
-                     step_value = 0.008   #in seconds
+                     step_value = 0.001   #in seconds
                      self.time_data = np.arange(start=0, stop=step_value * len(self.ecg_data), step = step_value)  
                 else:
                      self.time_data = df['Time'].values  # Extract time column
                 self.index = 0  # Reset position
                 self.extract_features(self.file_path)
-                self.timer_ecg.start(50)  # Start updating every 50ms
+                self.timer_ecg.start(5)  # Start updating every 5ms
 
         except Exception as e:
                 print("Error loading ECG file:", e)
@@ -460,9 +460,6 @@ class Ui_MainWindow(object):
     def extract_features(self, file_path):
         try:
 
-            df = pd.read_csv(file_path)
-            self.time_data = df['Time'].values
-            self.ecg_data = df['Amplitude'].values
             fs = 1 / (self.time_data[1] - self.time_data[0])  # Sampling rate
 
             # Frequency-Domain Features
@@ -561,7 +558,7 @@ class Ui_MainWindow(object):
 
         # Sampling rate calculation
         fs = 1 / (self.time_data[1] - self.time_data[0])  # Sampling frequency (Hz)
-        distance = max(1, int(fs * 0.6))
+        distance = max(1, min(len(ecg_signal) // 4, int(fs*0.6)))
         # Detect R-peaks using find_peaks
         peaks, _ = signal.find_peaks(ecg_signal, height=np.mean(ecg_signal) + np.std(ecg_signal), distance=distance)  
         # distance=fs*0.6 ensures we detect R-peaks at least 0.6 sec apart
@@ -584,18 +581,24 @@ class Ui_MainWindow(object):
         # Arrhythmia Classification Function
     def classify_arrhythmia(self,dominant_freq, spectral_entropy, zcr, kurtosis, skewness, rolloff_85, rolloff_95, spectral_centroid): 
         classification = []
-        if kurtosis < 5 and dominant_freq<8:
+        if kurtosis < 5 and 5 <= dominant_freq < 8:
+                print("atrial fib")
                 classification.append("Atrial Fibrillation")
-        if 5 <= kurtosis <= 10 and dominant_freq>10:
+        elif 5 <= kurtosis <= 10 and dominant_freq>10:
+                print("atrial flutter")
                 classification.append("Atrial Flutter")
-        if 10 <= kurtosis <= 14 and dominant_freq<10:
+        elif 10 <= kurtosis <= 14 and dominant_freq<10:
+                print("svt")
                 classification.append("Supraventricular Tachycardia")
-        if 14 <= kurtosis < 19 and dominant_freq<2:
+        elif 14 <= kurtosis < 19 and dominant_freq<2:
+                print("sinus B")
                 classification.append("Sinus Bradycardia")
         elif kurtosis >=19 and dominant_freq>10:
+                print("sinus T")
                 classification.append("Sinus Tachycardia")
-        else: #kurtosis==4.7 dominant_freq==4.88
-                classification.append("Normal ECG. No arrhythmia")
+        else: 
+                classification.append("Normal sinus rhythm. No arrhythmia")
+
         return classification
 
 
