@@ -584,18 +584,18 @@ class Ui_MainWindow(object):
         # Arrhythmia Classification Function
     def classify_arrhythmia(self,dominant_freq, spectral_entropy, zcr, kurtosis, skewness, rolloff_85, rolloff_95, spectral_centroid): 
         classification = []
-        if dominant_freq < 2.6:
-                classification.append("Bradycardia")
-        if 1.3 <= dominant_freq <= 2.2 and spectral_entropy > 4.0 and zcr > 0.10:
-                classification.append("Atrial Flutter")
-        if 1.8 <= dominant_freq <= 2.6 and spectral_entropy < 3.5 and zcr < 0.05 and kurtosis > 8:
+        if kurtosis < 5 and dominant_freq<8:
                 classification.append("Atrial Fibrillation")
-        if zcr < 0.05:
-                classification.append("Very Stable Rhythm")
-        elif 0.05 <= zcr < 0.15:
-                classification.append("Moderately Irregular")
-        else:
-                classification.append("Possible AFib")
+        if 5 <= kurtosis <= 10 and dominant_freq>10:
+                classification.append("Atrial Flutter")
+        if 10 <= kurtosis <= 14 and dominant_freq<10:
+                classification.append("Supraventricular Tachycardia")
+        if 14 <= kurtosis < 19 and dominant_freq<2:
+                classification.append("Sinus Bradycardia")
+        elif kurtosis >=19 and dominant_freq>10:
+                classification.append("Sinus Tachycardia")
+        else: #kurtosis==4.7 dominant_freq==4.88
+                classification.append("Normal ECG. No arrhythmia")
         return classification
 
 
