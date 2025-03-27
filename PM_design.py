@@ -358,11 +358,12 @@ class Ui_MainWindow(object):
                 self.spo2_index = 0  # Reset index after loading new data
             except Exception as e:
                 print("Error loading dataset:", e)
-    
+
     def update_all_plots(self):
         self.update_spo2_plot()
         self.update_bp_value()
-        # self.update_ECG_plot()
+        self.update_temperature()  # Add this line
+        self.update_respiratory_rate()
     
     def update_bp_value(self):
         systolic = np.random.randint(125, 130)
@@ -699,11 +700,7 @@ class Ui_MainWindow(object):
 
 
 
-    def update_all_plots(self):
-        self.update_spo2_plot()
-        self.update_bp_value()
-        self.update_temperature()  # Add this line
-        self.update_respiratory_rate()
+
 
 
 
