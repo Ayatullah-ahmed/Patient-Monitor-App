@@ -443,8 +443,12 @@ class Ui_MainWindow(object):
                 return
         try:
                 df = pd.read_csv(self.file_path)  # Load CSV into Pandas DataFrame
-                self.time_data = df['Time'].values  # Extract time column
-                self.ecg_data = df['Amplitude'].values  # Extract ECG signal column
+                self.ecg_data = df['signal'].values  # Extract ECG signal column
+                if 'Time' not in df.columns:
+                     step_value = 0.008   #in seconds
+                     self.time_data = np.arange(start=0, stop=step_value * len(self.ecg_data), step = step_value)  
+                else:
+                     self.time_data = df['Time'].values  # Extract time column
                 self.index = 0  # Reset position
                 self.extract_features(self.file_path)
                 self.timer_ecg.start(50)  # Start updating every 50ms
@@ -557,9 +561,9 @@ class Ui_MainWindow(object):
 
         # Sampling rate calculation
         fs = 1 / (self.time_data[1] - self.time_data[0])  # Sampling frequency (Hz)
-
+        distance = max(1, int(fs * 0.6))
         # Detect R-peaks using find_peaks
-        peaks, _ = signal.find_peaks(ecg_signal, height=np.mean(ecg_signal) + np.std(ecg_signal), distance=fs*0.6)  
+        peaks, _ = signal.find_peaks(ecg_signal, height=np.mean(ecg_signal) + np.std(ecg_signal), distance=distance)  
         # distance=fs*0.6 ensures we detect R-peaks at least 0.6 sec apart
 
         if len(peaks) < 2:
